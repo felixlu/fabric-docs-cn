@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Library Use &mdash; Fabric-docs-cn 1.8 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Fabric-docs-cn 1.8 documentation" href="../index.html" />
+    <link rel="next" title="Managing output" href="output_controls.html" />
+    <link rel="prev" title="Interaction with remote programs" href="interactivity.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="output_controls.html" title="Managing output"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="interactivity.html" title="Interaction with remote programs"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Fabric-docs-cn 1.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="library-use">
+<h1>Library Use<a class="headerlink" href="#library-use" title="Permalink to this headline">¶</a></h1>
+<p>Fabric&#8217;s primary use case is via fabfiles and the <a class="reference internal" href="fab.html"><em>fab</em></a> tool,
+and this is reflected in much of the documentation. However, Fabric&#8217;s internals
+are written in such a manner as to be easily used without <tt class="docutils literal"><span class="pre">fab</span></tt> or fabfiles
+at all &#8211; this document will show you how.</p>
+<p>There&#8217;s really only a couple of considerations one must keep in mind, when
+compared to writing a fabfile and using <tt class="docutils literal"><span class="pre">fab</span></tt> to run it: how connections are
+really made, and how disconnections occur.</p>
+<div class="section" id="connections">
+<h2>Connections<a class="headerlink" href="#connections" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;ve documented how Fabric really connects to its hosts before, but it&#8217;s
+currently somewhat buried in the middle of the overall <a class="reference internal" href="execution.html"><em>execution docs</em></a>. Specifically, you&#8217;ll want to skip over to the
+<a class="reference internal" href="execution.html#connections"><em>Connections</em></a> section and read it real quick. (You should really give that
+entire document a once-over, but it&#8217;s not absolutely required.)</p>
+<p>As that section mentions, the key is simply that <cite>~fabric.operations.run</cite>,
+<cite>~fabric.operations.sudo</cite> and the other operations only look in one place when
+connecting: <a class="reference internal" href="env.html#host-string"><em>env.host_string</em></a>. All of the other mechanisms
+for setting hosts are interpreted by the <tt class="docutils literal"><span class="pre">fab</span></tt> tool when it runs, and don&#8217;t
+matter when running as a library.</p>
+<p>That said, most use cases where you want to marry a given task <tt class="docutils literal"><span class="pre">X</span></tt> and a given list of hosts <tt class="docutils literal"><span class="pre">Y</span></tt> can, as of Fabric 1.3, be handled with the <cite>~fabric.tasks.execute</cite> function via <tt class="docutils literal"><span class="pre">execute(X,</span> <span class="pre">hosts=Y)</span></tt>. Please see <cite>~fabric.tasks.execute</cite>&#8216;s documentation for details &#8211; manual host string manipulation should be rarely necessary.</p>
+</div>
+<div class="section" id="disconnecting">
+<h2>Disconnecting<a class="headerlink" href="#disconnecting" title="Permalink to this headline">¶</a></h2>
+<p>The other main thing that <tt class="docutils literal"><span class="pre">fab</span></tt> does for you is to disconnect from all hosts
+at the end of a session; otherwise, Python will sit around forever waiting for
+those network resources to be released.</p>
+<p>Fabric 0.9.4 and newer have a function you can use to do this easily:
+<cite>~fabric.network.disconnect_all</cite>. Simply make sure your code calls this when it
+terminates (typically in the <tt class="docutils literal"><span class="pre">finally</span></tt> clause of an outer <tt class="docutils literal"><span class="pre">try:</span> <span class="pre">finally</span></tt>
+statement &#8211; lest errors in your code prevent disconnections from happening!)
+and things ought to work pretty well.</p>
+<p>If you&#8217;re on Fabric 0.9.3 or older, you can simply do this (<tt class="docutils literal"><span class="pre">disconnect_all</span></tt>
+just adds a bit of nice output to this logic):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">fabric.state</span> <span class="kn">import</span> <span class="n">connections</span>
+
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">connections</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">connections</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">del</span> <span class="n">connections</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="final-note">
+<h2>Final note<a class="headerlink" href="#final-note" title="Permalink to this headline">¶</a></h2>
+<p>This document is an early draft, and may not cover absolutely every difference
+between <tt class="docutils literal"><span class="pre">fab</span></tt> use and library use. However, the above should highlight the
+largest stumbling blocks. When in doubt, note that in the Fabric source code,
+<tt class="docutils literal"><span class="pre">fabric/main.py</span></tt> contains the bulk of the extra work done by <tt class="docutils literal"><span class="pre">fab</span></tt>, and may
+serve as a useful reference.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Library Use</a><ul>
+<li><a class="reference internal" href="#connections">Connections</a></li>
+<li><a class="reference internal" href="#disconnecting">Disconnecting</a></li>
+<li><a class="reference internal" href="#final-note">Final note</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="interactivity.html"
+                        title="previous chapter">Interaction with remote programs</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="output_controls.html"
+                        title="next chapter">Managing output</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/usage/library.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="output_controls.html" title="Managing output"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="interactivity.html" title="Interaction with remote programs"
+             >previous</a> |</li>
+        <li><a href="../index.html">Fabric-docs-cn 1.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Felix.Lu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

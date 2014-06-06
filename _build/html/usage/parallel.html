@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Parallel execution &mdash; Fabric-docs-cn 1.8 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Fabric-docs-cn 1.8 documentation" href="../index.html" />
+    <link rel="next" title="SSH behavior" href="ssh.html" />
+    <link rel="prev" title="Managing output" href="output_controls.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ssh.html" title="SSH behavior"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="output_controls.html" title="Managing output"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Fabric-docs-cn 1.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="parallel-execution">
+<h1>Parallel execution<a class="headerlink" href="#parallel-execution" title="Permalink to this headline">¶</a></h1>
+<div class="versionadded" id="id1">
+<p><span class="versionmodified">New in version 1.3.</span></p>
+</div>
+<p>By default, Fabric executes all specified tasks <strong>serially</strong> (see
+<a class="reference internal" href="execution.html#execution-strategy"><em>Execution strategy</em></a> for details.) This document describes Fabric&#8217;s
+options for running tasks on multiple hosts in <strong>parallel</strong>, via per-task
+decorators and/or global command-line switches.</p>
+<div class="section" id="what-it-does">
+<h2>What it does<a class="headerlink" href="#what-it-does" title="Permalink to this headline">¶</a></h2>
+<p>Because Fabric 1.x is not fully threadsafe (and because in general use, task
+functions do not typically interact with one another) this functionality is
+implemented via the Python <a class="reference external" href="http://docs.python.org/library/multiprocessing.html">multiprocessing</a> module. It creates one
+new process for each host and task combination, optionally using a
+(configurable) sliding window to prevent too many processes from running at the
+same time.</p>
+<p>For example, imagine a scenario where you want to update Web application code
+on a number of Web servers, and then reload the servers once the code has been
+distributed everywhere (to allow for easier rollback if code updates fail.) One
+could implement this with the following fabfile:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">fabric.api</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">def</span> <span class="nf">update</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">cd</span><span class="p">(</span><span class="s">&quot;/srv/django/myapp&quot;</span><span class="p">):</span>
+        <span class="n">run</span><span class="p">(</span><span class="s">&quot;git pull&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">reload</span><span class="p">():</span>
+    <span class="n">sudo</span><span class="p">(</span><span class="s">&quot;service apache2 reload&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and execute it on a set of 3 servers, in serial, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ fab -H web1,web2,web3 update reload
+</pre></div>
+</div>
+<p>Normally, without any parallel execution options activated, Fabric would run
+in order:</p>
+<ol class="arabic simple">
+<li><tt class="docutils literal"><span class="pre">update</span></tt> on <tt class="docutils literal"><span class="pre">web1</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">update</span></tt> on <tt class="docutils literal"><span class="pre">web2</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">update</span></tt> on <tt class="docutils literal"><span class="pre">web3</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">reload</span></tt> on <tt class="docutils literal"><span class="pre">web1</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">reload</span></tt> on <tt class="docutils literal"><span class="pre">web2</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">reload</span></tt> on <tt class="docutils literal"><span class="pre">web3</span></tt></li>
+</ol>
+<p>With parallel execution activated (via <a class="reference internal" href="fab.html#cmdoption-P"><em class="xref std std-option">-P</em></a> &#8211; see below for details),
+this turns into:</p>
+<ol class="arabic simple">
+<li><tt class="docutils literal"><span class="pre">update</span></tt> on <tt class="docutils literal"><span class="pre">web1</span></tt>, <tt class="docutils literal"><span class="pre">web2</span></tt>, and <tt class="docutils literal"><span class="pre">web3</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">reload</span></tt> on <tt class="docutils literal"><span class="pre">web1</span></tt>, <tt class="docutils literal"><span class="pre">web2</span></tt>, and <tt class="docutils literal"><span class="pre">web3</span></tt></li>
+</ol>
+<p>Hopefully the benefits of this are obvious &#8211; if <tt class="docutils literal"><span class="pre">update</span></tt> took 5 seconds to
+run and <tt class="docutils literal"><span class="pre">reload</span></tt> took 2 seconds, serial execution takes (5+2)*3 = 21 seconds
+to run, while parallel execution takes only a third of the time, (5+2) = 7
+seconds on average.</p>
+</div>
+<div class="section" id="how-to-use-it">
+<h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="decorators">
+<h3>Decorators<a class="headerlink" href="#decorators" title="Permalink to this headline">¶</a></h3>
+<p>Since the minimum &#8220;unit&#8221; that parallel execution affects is a task, the
+functionality may be enabled or disabled on a task-by-task basis using the
+<cite>~fabric.decorators.parallel</cite> and <cite>~fabric.decorators.serial</cite> decorators. For
+example, this fabfile:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">fabric.api</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="nd">@parallel</span>
+<span class="k">def</span> <span class="nf">runs_in_parallel</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">runs_serially</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>when run in this manner:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ fab -H host1,host2,host3 runs_in_parallel runs_serially
+</pre></div>
+</div>
+<p>will result in the following execution sequence:</p>
+<ol class="arabic simple">
+<li><tt class="docutils literal"><span class="pre">runs_in_parallel</span></tt> on <tt class="docutils literal"><span class="pre">host1</span></tt>, <tt class="docutils literal"><span class="pre">host2</span></tt>, and <tt class="docutils literal"><span class="pre">host3</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">runs_serially</span></tt> on <tt class="docutils literal"><span class="pre">host1</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">runs_serially</span></tt> on <tt class="docutils literal"><span class="pre">host2</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">runs_serially</span></tt> on <tt class="docutils literal"><span class="pre">host3</span></tt></li>
+</ol>
+</div>
+<div class="section" id="command-line-flags">
+<h3>Command-line flags<a class="headerlink" href="#command-line-flags" title="Permalink to this headline">¶</a></h3>
+<p>One may also force all tasks to run in parallel by using the command-line flag
+<a class="reference internal" href="fab.html#cmdoption-P"><em class="xref std std-option">-P</em></a> or the env variable <a class="reference internal" href="env.html#env-parallel"><em>env.parallel</em></a>.  However,
+any task specifically wrapped with <cite>~fabric.decorators.serial</cite> will ignore this
+setting and continue to run serially.</p>
+<p>For example, the following fabfile will result in the same execution sequence
+as the one above:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">fabric.api</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">def</span> <span class="nf">runs_in_parallel</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+<span class="nd">@serial</span>
+<span class="k">def</span> <span class="nf">runs_serially</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>when invoked like so:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ fab -H host1,host2,host3 -P runs_in_parallel runs_serially
+</pre></div>
+</div>
+<p>As before, <tt class="docutils literal"><span class="pre">runs_in_parallel</span></tt> will run in parallel, and <tt class="docutils literal"><span class="pre">runs_serially</span></tt> in
+sequence.</p>
+</div>
+</div>
+<div class="section" id="bubble-size">
+<h2>Bubble size<a class="headerlink" href="#bubble-size" title="Permalink to this headline">¶</a></h2>
+<p>With large host lists, a user&#8217;s local machine can get overwhelmed by running
+too many concurrent Fabric processes. Because of this, you may opt to use a
+moving bubble approach that limits Fabric to a specific number of concurrently
+active processes.</p>
+<p>By default, no bubble is used and all hosts are run in one concurrent pool. You
+can override this on a per-task level by specifying the <tt class="docutils literal"><span class="pre">pool_size</span></tt> keyword
+argument to <cite>~fabric.decorators.parallel</cite>, or globally via <a class="reference internal" href="fab.html#cmdoption-z"><em class="xref std std-option">-z</em></a>.</p>
+<p>For example, to run on 5 hosts at a time:</p>
+<div class="highlight-python"><div class="highlight"><pre>from fabric.api import *
+
+@parallel(pool_size=5)
+def heavy_task():
+    # lots of heavy local lifting or lots of IO here
+</pre></div>
+</div>
+<p>Or skip the <tt class="docutils literal"><span class="pre">pool_size</span></tt> kwarg and instead:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ fab -P -z 5 heavy_task
+</pre></div>
+</div>
+</div>
+<div class="section" id="linewise-vs-bytewise-output">
+<span id="linewise-output"></span><h2>Linewise vs bytewise output<a class="headerlink" href="#linewise-vs-bytewise-output" title="Permalink to this headline">¶</a></h2>
+<p>Fabric&#8217;s default mode of printing to the terminal is byte-by-byte, in order to
+support <a class="reference internal" href="interactivity.html"><em>Interaction with remote programs</em></a>. This often gives poor results when running
+in parallel mode, as the multiple processes may write to your terminal&#8217;s
+standard out stream simultaneously.</p>
+<p>To help offset this problem, Fabric&#8217;s option for linewise output is
+automatically enabled whenever parallelism is active. This will cause you to
+lose most of the benefits outlined in the above link Fabric&#8217;s remote
+interactivity features, but as those do not map well to parallel invocations,
+it&#8217;s typically a fair trade.</p>
+<p>There&#8217;s no way to avoid the multiple processes mixing up on a line-by-line
+basis, but you will at least be able to tell them apart by the host-string line
+prefix.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Future versions will add improved logging support to make troubleshooting
+parallel runs easier.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Parallel execution</a><ul>
+<li><a class="reference internal" href="#what-it-does">What it does</a></li>
+<li><a class="reference internal" href="#how-to-use-it">How to use it</a><ul>
+<li><a class="reference internal" href="#decorators">Decorators</a></li>
+<li><a class="reference internal" href="#command-line-flags">Command-line flags</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bubble-size">Bubble size</a></li>
+<li><a class="reference internal" href="#linewise-vs-bytewise-output">Linewise vs bytewise output</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="output_controls.html"
+                        title="previous chapter">Managing output</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ssh.html"
+                        title="next chapter">SSH behavior</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/usage/parallel.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ssh.html" title="SSH behavior"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="output_controls.html" title="Managing output"
+             >previous</a> |</li>
+        <li><a href="../index.html">Fabric-docs-cn 1.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Felix.Lu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Managing output &mdash; Fabric-docs-cn 1.8 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Fabric-docs-cn 1.8 documentation" href="../index.html" />
+    <link rel="next" title="Parallel execution" href="parallel.html" />
+    <link rel="prev" title="Library Use" href="library.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parallel.html" title="Parallel execution"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="library.html" title="Library Use"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Fabric-docs-cn 1.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="managing-output">
+<h1>Managing output<a class="headerlink" href="#managing-output" title="Permalink to this headline">¶</a></h1>
+<p>The <tt class="docutils literal"><span class="pre">fab</span></tt> tool is very verbose by default and prints out almost everything it
+can, including the remote end&#8217;s stderr and stdout streams, the command strings
+being executed, and so forth. While this is necessary in many cases in order to
+know just what&#8217;s going on, any nontrivial Fabric task will quickly become
+difficult to follow as it runs.</p>
+<div class="section" id="output-levels">
+<h2>Output levels<a class="headerlink" href="#output-levels" title="Permalink to this headline">¶</a></h2>
+<p>To aid in organizing task output, Fabric output is grouped into a number of
+non-overlapping levels or groups, each of which may be turned on or off
+independently. This provides flexible control over what is displayed to the
+user.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All levels, save for <tt class="docutils literal"><span class="pre">debug</span></tt>, are on by default.</p>
+</div>
+<div class="section" id="standard-output-levels">
+<h3>Standard output levels<a class="headerlink" href="#standard-output-levels" title="Permalink to this headline">¶</a></h3>
+<p>The standard, atomic output levels/groups are as follows:</p>
+<ul class="simple">
+<li><strong>status</strong>: Status messages, i.e. noting when Fabric is done running, if
+the user used a keyboard interrupt, or when servers are disconnected from.
+These messages are almost always relevant and rarely verbose.</li>
+<li><strong>aborts</strong>: Abort messages. Like status messages, these should really only be
+turned off when using Fabric as a library, and possibly not even then. Note
+that even if this output group is turned off, aborts will still occur &#8211;
+there just won&#8217;t be any output about why Fabric aborted!</li>
+<li><strong>warnings</strong>: Warning messages. These are often turned off when one expects a
+given operation to fail, such as when using <tt class="docutils literal"><span class="pre">grep</span></tt> to test existence of
+text in a file. If paired with setting <tt class="docutils literal"><span class="pre">env.warn_only</span></tt> to True, this
+can result in fully silent warnings when remote programs fail. As with
+<tt class="docutils literal"><span class="pre">aborts</span></tt>, this setting does not control actual warning behavior, only
+whether warning messages are printed or hidden.</li>
+<li><strong>running</strong>: Printouts of commands being executed or files transferred, e.g.
+<tt class="docutils literal"><span class="pre">[myserver]</span> <span class="pre">run:</span> <span class="pre">ls</span> <span class="pre">/var/www</span></tt>. Also controls printing of tasks being run,
+e.g. <tt class="docutils literal"><span class="pre">[myserver]</span> <span class="pre">Executing</span> <span class="pre">task</span> <span class="pre">'foo'</span></tt>.</li>
+<li><strong>stdout</strong>: Local, or remote, stdout, i.e. non-error output from commands.</li>
+<li><strong>stderr</strong>: Local, or remote, stderr, i.e. error-related output from commands.</li>
+<li><strong>user</strong>: User-generated output, i.e. local output printed by fabfile code
+via use of the <cite>~fabric.utils.fastprint</cite> or <cite>~fabric.utils.puts</cite> functions.</li>
+</ul>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 0.9.2: </span>Added &#8220;Executing task&#8221; lines to the <tt class="docutils literal"><span class="pre">running</span></tt> output level.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 0.9.2: </span>Added the <tt class="docutils literal"><span class="pre">user</span></tt> output level.</p>
+</div>
+</div>
+<div class="section" id="debug-output">
+<h3>Debug output<a class="headerlink" href="#debug-output" title="Permalink to this headline">¶</a></h3>
+<p>There is a final atomic output level, <tt class="docutils literal"><span class="pre">debug</span></tt>, which behaves slightly
+differently from the rest:</p>
+<ul>
+<li><p class="first"><strong>debug</strong>: Turn on debugging (which is off by default.) Currently, this is
+largely used to view the &#8220;full&#8221; commands being run; take for example this
+<cite>~fabric.operations.run</cite> call:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">run</span><span class="p">(</span><span class="s">&#39;ls &quot;/home/username/Folder Name With Spaces/&quot;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Normally, the <tt class="docutils literal"><span class="pre">running</span></tt> line will show exactly what is passed into
+<cite>~fabric.operations.run</cite>, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre>[hostname] run: ls &quot;/home/username/Folder Name With Spaces/&quot;
+</pre></div>
+</div>
+<p>With <tt class="docutils literal"><span class="pre">debug</span></tt> on, and assuming you&#8217;ve left <a class="reference internal" href="env.html#shell"><em>shell</em></a> set to <tt class="docutils literal"><span class="pre">True</span></tt>, you
+will see the literal, full string as passed to the remote server:</p>
+<div class="highlight-python"><div class="highlight"><pre>[hostname] run: /bin/bash -l -c &quot;ls \&quot;/home/username/Folder Name With Spaces\&quot;&quot;
+</pre></div>
+</div>
+<p>Enabling <tt class="docutils literal"><span class="pre">debug</span></tt> output will also display full Python tracebacks during
+aborts.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Where modifying other pieces of output (such as in the above example
+where it modifies the &#8216;running&#8217; line to show the shell and any escape
+characters), this setting takes precedence over the others; so if
+<tt class="docutils literal"><span class="pre">running</span></tt> is False but <tt class="docutils literal"><span class="pre">debug</span></tt> is True, you will still be shown the
+&#8216;running&#8217; line in its debugging form.</p>
+</div>
+</li>
+</ul>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 1.0: </span>Debug output now includes full Python tracebacks during aborts.</p>
+</div>
+</div>
+<div class="section" id="output-level-aliases">
+<span id="output-aliases"></span><h3>Output level aliases<a class="headerlink" href="#output-level-aliases" title="Permalink to this headline">¶</a></h3>
+<p>In addition to the atomic/standalone levels above, Fabric also provides a
+couple of convenience aliases which map to multiple other levels. These may be
+referenced anywhere the other levels are referenced, and will effectively
+toggle all of the levels they are mapped to.</p>
+<ul class="simple">
+<li><strong>output</strong>: Maps to both <tt class="docutils literal"><span class="pre">stdout</span></tt> and <tt class="docutils literal"><span class="pre">stderr</span></tt>. Useful for when you only
+care to see the &#8216;running&#8217; lines and your own print statements (and warnings).</li>
+<li><strong>everything</strong>: Includes <tt class="docutils literal"><span class="pre">warnings</span></tt>, <tt class="docutils literal"><span class="pre">running</span></tt>, <tt class="docutils literal"><span class="pre">user</span></tt> and <tt class="docutils literal"><span class="pre">output</span></tt>
+(see above.) Thus, when turning off <tt class="docutils literal"><span class="pre">everything</span></tt>, you will only see a bare
+minimum of output (just <tt class="docutils literal"><span class="pre">status</span></tt> and <tt class="docutils literal"><span class="pre">debug</span></tt> if it&#8217;s on), along with your
+own print statements.</li>
+<li><strong>commands</strong>: Includes <tt class="docutils literal"><span class="pre">stdout</span></tt> and <tt class="docutils literal"><span class="pre">running</span></tt>. Good for hiding
+non-erroring commands entirely, while still displaying any stderr output.</li>
+</ul>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 1.4: </span>Added the <tt class="docutils literal"><span class="pre">commands</span></tt> output alias.</p>
+</div>
+</div>
+</div>
+<div class="section" id="hiding-and-or-showing-output-levels">
+<h2>Hiding and/or showing output levels<a class="headerlink" href="#hiding-and-or-showing-output-levels" title="Permalink to this headline">¶</a></h2>
+<p>You may toggle any of Fabric&#8217;s output levels in a number of ways; for examples,
+please see the API docs linked in each bullet point:</p>
+<ul>
+<li><p class="first"><strong>Direct modification of fabric.state.output</strong>: <cite>fabric.state.output</cite> is a
+dictionary subclass (similar to <a class="reference internal" href="env.html"><em>env</em></a>) whose keys are the output
+level names, and whose values are either True (show that particular type of
+output) or False (hide it.)</p>
+<p><cite>fabric.state.output</cite> is the lowest-level implementation of output levels and
+is what Fabric&#8217;s internals reference when deciding whether or not to print
+their output.</p>
+</li>
+<li><p class="first"><strong>Context managers</strong>: <cite>~fabric.context_managers.hide</cite> and
+<cite>~fabric.context_managers.show</cite> are twin context managers that take one or
+more output level names as strings, and either hide or show them within the
+wrapped block. As with Fabric&#8217;s other context managers, the prior values are
+restored when the block exits.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><cite>~fabric.context_managers.settings</cite>, which can nest calls to
+<cite>~fabric.context_managers.hide</cite> and/or <cite>~fabric.context_managers.show</cite>
+inside itself.</p>
+</div>
+</li>
+<li><p class="first"><strong>Command-line arguments</strong>: You may use the <a class="reference internal" href="fab.html#cmdoption--hide"><em class="xref std std-option">--hide</em></a> and/or
+<a class="reference internal" href="fab.html#cmdoption--show"><em class="xref std std-option">--show</em></a> arguments to <a class="reference internal" href="fab.html"><em>fab options and arguments</em></a>, which behave exactly like the
+context managers of the same names (but are, naturally, globally applied) and
+take comma-separated strings as input.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Managing output</a><ul>
+<li><a class="reference internal" href="#output-levels">Output levels</a><ul>
+<li><a class="reference internal" href="#standard-output-levels">Standard output levels</a></li>
+<li><a class="reference internal" href="#debug-output">Debug output</a></li>
+<li><a class="reference internal" href="#output-level-aliases">Output level aliases</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#hiding-and-or-showing-output-levels">Hiding and/or showing output levels</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="library.html"
+                        title="previous chapter">Library Use</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel.html"
+                        title="next chapter">Parallel execution</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/usage/output_controls.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parallel.html" title="Parallel execution"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="library.html" title="Library Use"
+             >previous</a> |</li>
+        <li><a href="../index.html">Fabric-docs-cn 1.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Felix.Lu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

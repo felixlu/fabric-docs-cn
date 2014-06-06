@@ -11,10 +11,7 @@ Fabric 是什么？
 
 正如 ``README`` 所说：
 
-    .. include:: ../../README.rst
-        :end-before: It provides
-
-    .. Fabric 是一个 Python (2.5-2.7) 库和命令行工具，用来流水线化执行 SSH 以部署应用或系统管理任务。
+    Fabric 是一个 Python (2.5-2.7) 库和命令行工具，用来流水线化执行 SSH 以部署应用或系统管理任务。
 
 更具体地说，Fabric 是：
 
@@ -26,12 +23,12 @@ Fabric 是什么？
 你好， ``fab``
 ==============
 
-如果没有下面这个国际惯例，这个文档恐怕不能算是个合格的入门指导：
+如果没有下面这个国际惯例，这个文档恐怕不能算是个合格的入门指导::
 
     def hello():
         print("Hello world!")
 
-把上述代码放在你当前的工作目录中一个名为 ``fabfile.py`` 的 Python 模块文件中。然后这个 ``hello`` 函数就可以用安装 Fabric 时顺便装上的 ``fab`` 工具来执行了，它将如你所料地工作：
+把上述代码放在你当前的工作目录中一个名为 ``fabfile.py`` 的 Python 模块文件中。然后这个 ``hello`` 函数就可以用安装 Fabric 时顺便装上的 ``fab`` 工具来执行了，它将如你所料地工作::
 
     $ fab hello
     Hello world!
@@ -50,19 +47,19 @@ Fabric 是什么？
 任务参数
 ==============
 
-就像你在常规的 Python 编程中那样，在执行任务时传递一些运行时参数经常能帮上大忙。Fabric 支持用兼容 Shell 的参数用法： ``<任务名>:<参数>, <关键字参数名>=<参数值>,...`` 虽然有点勉强，但可以扩展上面的例子，让它只向你 say hello：
+就像你在常规的 Python 编程中那样，在执行任务时传递一些运行时参数经常能帮上大忙。Fabric 支持用兼容 Shell 的参数用法： ``<任务名>:<参数>, <关键字参数名>=<参数值>,...`` 虽然有点勉强，但可以扩展上面的例子，让它只向你 say hello::
 
     def hello(name="world"):
         print("Hello %s!" % name)
 
-默认情况下，调用 ``fab hello`` 仍然会像之前那样工作，但现在我们可以做些个性化定制了：
+默认情况下，调用 ``fab hello`` 仍然会像之前那样工作，但现在我们可以做些个性化定制了::
 
     $ fab hello:name=Jeff
     Hello Jeff!
 
     Done.
 
-用过 Python 编程的同学可能已经猜到了，这样调用也是完全一样的：
+用过 Python 编程的同学可能已经猜到了，这样调用也是完全一样的::
 
     $ fab hello:Jeff
     Hello Jeff!
@@ -76,11 +73,11 @@ Fabric 是什么？
 本地命令
 ==============
 
-在前面的例子中， ``fab`` 实际上只节省了数行 ``if __name__ == "__main__" ``这样的固定样板代码而已。Fabric 更多地被设计为使用它自己的 API，它们包括执行 Shell 命令、传送文件等等的函数（或 **操作** ）。
+在前面的例子中， ``fab`` 实际上只节省了数行 ``if __name__ == "__main__"`` 这样的固定样板代码而已。Fabric 更多地被设计为使用它自己的 API，它们包括执行 Shell 命令、传送文件等等的函数（或 **操作** ）。
 
 我们以一个 Web 应用为例来创建一个 fabfile。具体的情景如下：这个 Web 应用用一台远程服务器 ``vcshost`` 上的 Git 管理代码，我们把它的代码库克隆到了本地 ``localhost`` 中。当我们把修改后的代码 push 回 ``vcshost`` 的时候，我们想自动就立即把新的版本安装到另一台远程服务器 ``my_server`` 上。我们将用自动化的本地和远程 Git 命令来完成这些工作。
 
-fabfile 文件最好放在一个项目的根目录：
+fabfile 文件最好放在一个项目的根目录::
 
     .
     |-- __init__.py
@@ -100,7 +97,7 @@ fabfile 文件最好放在一个项目的根目录：
 
     我们在这里用的是一个 Django 应用，但这仅仅是个例子——Fabric 并未与任何外部代码绑定，除了它的 SSH 库。
 
-作为起步，可能我们希望先执行测试，然后再提交到 VCS（版本控制系统），为部署作好准备：
+作为起步，可能我们希望先执行测试，然后再提交到 VCS（版本控制系统），为部署作好准备::
 
     from fabric.api import local
 
@@ -109,7 +106,7 @@ fabfile 文件最好放在一个项目的根目录：
         local("git add -p && git commit")
         local("git push")
 
-这段代码的输出会是这样：
+这段代码的输出会是这样::
 
     $ fab prepare_deploy
     [localhost] run: ./manage.py test my_app
@@ -133,14 +130,14 @@ fabfile 文件最好放在一个项目的根目录：
 
     Done.
 
-这段代码很简单：导入一个 Fabric API： `~fabric.operations.local` ，然后用它执行本地 Shell 命令并与之交互，剩下的 Fabric API 也是类似的——它们都只是 Python 而已。
+这段代码很简单，导入一个 Fabric API： `~fabric.operations.local` ，然后用它执行本地 Shell 命令并与之交互，剩下的 Fabric API 也是类似的——它们都只是 Python 而已。
 
 .. seealso:: :doc:`api/core/operations`, :ref:`fabfile-discovery`
 
 用你的方式来组织
 ====================
 
-因为 Fabric“只是 Python”，你可以以你想要的任何方式来组织你的 fabfile。例如，把任务分割成多个子任务：
+因为 Fabric“只是 Python”，你可以以你想要的任何方式来组织你的 fabfile。例如，把任务分割成多个子任务::
 
     from fabric.api import local
 
@@ -165,7 +162,7 @@ fabfile 文件最好放在一个项目的根目录：
 
 我们的基本案例已经可以正常工作了，但如果测试失败了会发生什么事？没准我们想来个急刹车，并在部署之前修复这些失败的测试。
 
-Fabric 会检查被调用程序的返回值，如果这些程序没有干净地退出，Fabric 会放弃操作。下面我们就来看看如果一个测试用例遇到错误时会发生什么事：
+Fabric 会检查被调用程序的返回值，如果这些程序没有干净地退出，Fabric 会放弃操作。下面我们就来看看如果一个测试用例遇到错误时会发生什么事::
 
     $ fab prepare_deploy
     [localhost] run: ./manage.py test my_app
@@ -198,7 +195,7 @@ Fabric 会检查被调用程序的返回值，如果这些程序没有干净地�
 
 但如果我们想更加灵活，给用户另一个选择，又该怎么办呢？一个名为 :ref:`warn_only` 的设置（或 **环境变量** ，经常缩写为 **env var** ）可以把放弃变成警告，使得灵活处理错误成为现实。
 
-让我们把这个设置丢到我们的 ``test`` 函数中，然后看看这个 `~fabric.operations.local` 调用的结果如何：
+让我们把这个设置丢到我们的 ``test`` 函数中，然后看看这个 `~fabric.operations.local` 调用的结果如何::
 
     from __future__ import with_statement
     from fabric.api import local, settings, abort
@@ -227,7 +224,7 @@ Fabric 会检查被调用程序的返回值，如果这些程序没有干净地�
 建立连接
 ==================
 
-我们开始让 fabfile 回到主旨吧：定义一个 ``deploy`` 任务，让它在一台或多台远程服务器上运行，并保证代码是最新的：
+我们开始让 fabfile 回到主旨吧：定义一个 ``deploy`` 任务，让它在一台或多台远程服务器上运行，并保证代码是最新的::
 
     def deploy():
         code_dir = '/srv/django/myproject'
@@ -241,13 +238,13 @@ Fabric 会检查被调用程序的返回值，如果这些程序没有干净地�
 * `~fabric.context_managers.cd` 是一个很方便的前缀命令，相当于执行 ``cd /to/some/directory`` 命令，这个命令和 `~fabric.context_managers.lcd` 一样，不过后者针对本地；
 * `~fabric.operations.run` 则和 `~fabric.operations.local` 类似，但它是运行 **远程** 命令而非本地。
 
-我们还需要确认在文件顶部导入了新的函数：
+我们还需要确认在文件顶部导入了新的函数::
 
     from __future__ import with_statement
     from fabric.api import local, settings, abort, run, cd
     from fabric.contrib.console import confirm
 
-改好之后，我们再来部署：
+改好之后，我们再来部署::
 
     $ fab deploy
     No hosts found. Please specify (single) host string for connection: my_server
@@ -263,7 +260,7 @@ Fabric 会检查被调用程序的返回值，如果这些程序没有干净地�
 远程交互
 --------------------
 
-如果你已经签出过代码， ``git pull`` 就能很好地工作——但如果这是第一次部署呢？如果还能用 ``git clone`` 来处理这种情况那才叫棒呢：
+如果你已经签出过代码， ``git pull`` 就能很好地工作——但如果这是第一次部署呢？如果还能用 ``git clone`` 来处理这种情况那才叫棒呢::
 
     def deploy():
         code_dir = '/srv/django/myproject'
@@ -278,7 +275,7 @@ Fabric 会检查被调用程序的返回值，如果这些程序没有干净地�
 
 旧版本的 Fabric（和其他类似的高层次 SSH 库）像在监狱里一样运行远程命令，无法在本地交互。当你很迫切需要输入密码或与远程程序交互时，这就很成问题。
 
-Fabric 1.0 和后续的版本突破了这个限制，并保证你总是能和另一边对话。让我们看看当我们在一台没有 Git checkout 的新服务器上运行更新后的 ``deploy`` 任务时会发生什么：
+Fabric 1.0 和后续的版本突破了这个限制，并保证你总是能和另一边对话。让我们看看当我们在一台没有 Git checkout 的新服务器上运行更新后的 ``deploy`` 任务时会发生什么::
 
     $ fab deploy
     No hosts found. Please specify (single) host string for connection: my_server
@@ -314,7 +311,7 @@ Fabric 1.0 和后续的版本突破了这个限制，并保证你总是能和另
 
 在运行时输入连接信息已经落后太多了，所以 Fabric 提供了一种方便的办法，在你的 fabfile 或命令行中指定。我们不打算在这里完全展开来说，但我们会向你展示最常用的：设置全局主机列表 :ref:`env.hosts <hosts>` 。
 
-:doc:`env <usage/env>` 是一个全局的类字典对象，驱动着 Fabric 的大部分设置，而且可以带着属性写进去（事实上，前面见过的 `~fabric.context_managers.settings` 是它的一个简单包装）。因此，我们可以在模块层次上，在 fabfile 的顶部附近修改它，就像这样：
+:doc:`env <usage/env>` 是一个全局的类字典对象，驱动着 Fabric 的大部分设置，而且可以带着属性写进去（事实上，前面见过的 `~fabric.context_managers.settings` 是它的一个简单包装）。因此，我们可以在模块层次上，在 fabfile 的顶部附近修改它，就像这样::
 
     from __future__ import with_statement
     from fabric.api import *
@@ -332,10 +329,10 @@ Fabric 1.0 和后续的版本突破了这个限制，并保证你总是能和另
 .. seealso:: :doc:`usage/env`, :ref:`host-lists`
 
 
-结论
+小结
 ==========
 
-在经过了这么多，我们的完整的 fabfile 文件仍然相当短。下面是它的完整内容：
+在经过了这么多，我们的完整的 fabfile 文件仍然相当短。下面是它的完整内容::
 
     from __future__ import with_statement
     from fabric.api import *

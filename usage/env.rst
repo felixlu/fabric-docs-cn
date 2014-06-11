@@ -9,7 +9,7 @@
 环境与配置
 ============================
 
-Fabric 的大部分行为可以通过修改 ``env`` 变量来控制，例如 ``env.hosts``（已经在 :ref:`入门导览 <defining-connections>` 中见过）。其他经常需要修改的环境变量包括：
+Fabric 的大部分行为可以通过修改 ``env`` 变量来控制，例如 ``env.hosts`` （已经在 :ref:`入门导览 <defining-connections>` 中见过）。其他经常需要修改的环境变量包括：
 
 * ``user``：Fabric 默认使用你本地用户名去建立 SSH 连接，但如果有必要，你可以用 ``env.user`` 来覆写它。文档 :doc:`execution` 部分也有关于如何针对每个主机设置用户名的信息。
 * ``password``：用来显式设置你的默认连接或 sudo 密码。如果没有设置密码或设置了不正确的密码，Fabric 将会提示你输入。
@@ -88,7 +88,7 @@ Fabric 的大部分行为可以通过修改 ``env`` 变量来控制，例如 ``e
 
 **默认值：** ``False``
 
-当这个值为 ``True``时，Fabric 将以非交互模式运行。此模式下，任何需要提示用户输入（如提示输入密码、询问连接到哪个主机、fabfile 中触发的 `~fabric.operations.prompt` 等等）的时候，都会调用 `~fabric.utils.abort`。这就允许用户确保 Fabric 会话总是清楚地中止，而不是在某些预料之外的情况发生时，仍傻傻地一直在等待用户输入。
+当这个值为 ``True`` 时，Fabric 将以非交互模式运行。此模式下，任何需要提示用户输入（如提示输入密码、询问连接到哪个主机、fabfile 中触发的 `~fabric.operations.prompt` 等等）的时候，都会调用 `~fabric.utils.abort`。这就允许用户确保 Fabric 会话总是清楚地中止，而不是在某些预料之外的情况发生时，仍傻傻地一直在等待用户输入。
 
 .. versionadded:: 1.1
 .. seealso:: :option:`--abort-on-prompts`

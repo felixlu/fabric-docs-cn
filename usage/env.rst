@@ -99,8 +99,7 @@ Fabric 的大部分行为可以通过修改 ``env`` 变量来控制，例如 ``e
 
 **默认值：** ``[]``
 
-Set by ``fab`` to the full host list for the currently executing command. For
-informational purposes only.
+由 ``fab`` 设置的当前正在执行的命令的完整主机列表。仅供显示信息。
 
 .. seealso:: :doc:`execution`
 
@@ -111,8 +110,7 @@ informational purposes only.
 
 **默认值：** ``True``
 
-When set to ``False``, causes `~fabric.operations.run`/`~fabric.operations.sudo`
-to act as if they have been called with ``pty=False``.
+当设置为 ``False`` 时，会使 `~fabric.operations.run`/`~fabric.operations.sudo` 的行为像它们被用 ``pty=False`` 参数调用时一样。
 
 .. seealso:: :option:`--no-pty`
 .. versionadded:: 1.0
@@ -122,10 +120,9 @@ to act as if they have been called with ``pty=False``.
 ``colorize_errors``
 -------------------
 
-**Default** ``False``
+**默认值：** ``False``
 
-When set to ``True``, error output to the terminal is colored red and warnings
-are colored magenta to make them easier to see.
+当被设置为 ``True`` 时，输出到终端的错误信息会显示成红色，警告信息则显示为洋红色，以使它们更容易被看见。
 
 .. versionadded:: 1.7
 
@@ -134,11 +131,9 @@ are colored magenta to make them easier to see.
 ``combine_stderr``
 ------------------
 
-**Default**: ``True``
+**默认值：**: ``True``
 
-Causes the SSH layer to merge a remote program's stdout and stderr streams to
-avoid becoming meshed together when printed. See :ref:`combine_streams` for
-details on why this is needed and what its effects are.
+使 SSH 层合并远程程序的 stdout 和 stderr 流输出，以避免它们在打印时混在一起。查看 :ref:`combine_streams` 以了解为什么需要这个功能，及它的效果是怎样的。
 
 .. versionadded:: 1.0
 
@@ -147,10 +142,7 @@ details on why this is needed and what its effects are.
 
 **默认值：** ``None``
 
-Set by ``fab`` to the currently executing command name (e.g., when executed as
-``$ fab task1 task2``, ``env.command`` will be set to ``"task1"`` while
-``task1`` is executing, and then to ``"task2"``.) For informational purposes
-only.
+由 ``fab`` 设置的当前正在执行的命令名称（例如，执行 ``$ fab task1 task2`` 命令，当执行 ``task1`` 时， ``env.command`` 会被设置为 ``"task1"`` ，然后设置为 ``"task2"`` ）。仅供显示信息。
 
 .. seealso:: :doc:`execution`
 
@@ -159,8 +151,7 @@ only.
 
 **默认值：** ``[]``
 
-Modified by `~fabric.context_managers.prefix`, and prepended to commands
-executed by `~fabric.operations.run`/`~fabric.operations.sudo`.
+由 `~fabric.context_managers.prefix` 修改，并附加在由 `~fabric.operations.run`/`~fabric.operations.sudo` 执行的命令前面。
 
 .. versionadded:: 1.0
 
@@ -171,7 +162,7 @@ executed by `~fabric.operations.run`/`~fabric.operations.sudo`.
 
 **默认值：** ``None``
 
-Remote command timeout, in seconds.
+远程命令的超时时间，单位为秒。
 
 .. versionadded:: 1.6
 .. seealso:: :option:`--command-timeout`
@@ -183,7 +174,7 @@ Remote command timeout, in seconds.
 
 **默认值：** ``1``
 
-Number of times Fabric will attempt to connect when connecting to a new server. For backwards compatibility reasons, it defaults to only one connection attempt.
+Fabric 连接一台新服务器的重试次数。出于向后兼容的原因，它的默认值是只尝试连接一次。
 
 .. versionadded:: 1.4
 .. seealso:: :option:`--connection-attempts`, :ref:`timeout`
@@ -193,8 +184,7 @@ Number of times Fabric will attempt to connect when connecting to a new server. 
 
 **默认值：** ``''``
 
-Current working directory. Used to keep state for the
-`~fabric.context_managers.cd` context manager.
+当前工作目录，用来为 `~fabric.context_managers.cd` 上下文管理器保持状态。
 
 .. _dedupe_hosts:
 
@@ -203,13 +193,10 @@ Current working directory. Used to keep state for the
 
 **默认值：** ``True``
 
-Deduplicate merged host lists so any given host string is only represented once
-(e.g. when using combinations of ``@hosts`` + ``@roles``, or ``-H`` and
-``-R``.)
+去除合并后的主机列表中的重复项，以使任一个主机串只出现一次（例如，当使用 ``@hosts`` + ``@roles`` ，或 ``-H`` 和
+``-R`` 的组合的时候）。
 
-When set to ``False``, this option relaxes the deduplication, allowing users
-who explicitly want to run a task multiple times on the same host (say, in
-parallel, though it works fine serially too) to do so.
+当被设置为 ``False`` ，就不会去除重复项，这将允许用户显式地在同一台主机上将一个任务（以串行或并行方式）运行多次。
 
 .. versionadded:: 1.5
 
@@ -220,9 +207,7 @@ parallel, though it works fine serially too) to do so.
 
 **默认值：** ``False``
 
-If ``True``, the SSH layer will skip loading the user's known-hosts file.
-Useful for avoiding exceptions in situations where a "known host" changing its
-host key is actually valid (e.g. cloud servers such as EC2.)
+如果为 ``True`` SSH 层会跳过用户的 know-hosts 文件不加载。这样可以有效地避免当一个“已知主机”改变了 key、但仍然有效（云服务器，例如 EC2）时的异常。
 
 .. seealso:: :option:`--disable-known-hosts <-D>`, :doc:`ssh`
 
@@ -234,15 +219,10 @@ host key is actually valid (e.g. cloud servers such as EC2.)
 
 **默认值：** ``False``
 
-If ``True``, causes ``fab`` to close connections after each individual task
-execution, instead of at the end of the run. This helps prevent a lot of
-typically-unused network sessions from piling up and causing problems with
-limits on per-process open files, or network hardware.
+当它为 ``True`` 时， ``fab`` 会在每个单独的任务完成后关闭连接，而不是在整个运行结束后。这可以帮助避免堆积大量无用的网络会话、或因每个进程可打开的文件或网络硬件的限制而导致问题。
 
 .. note::
-    When active, this setting will result in the disconnect messages appearing
-    throughout your output, instead of at the end. This may be improved in
-    future releases.
+    当打开这个设置时，断开连接的信息会遍布于你的输出信息始终，而不是在最后。以后的版本可能会改进这一点。
 
 .. _effective_roles:
 
@@ -251,8 +231,7 @@ limits on per-process open files, or network hardware.
 
 **默认值：** ``[]``
 
-Set by ``fab`` to the roles list of the currently executing command. For
-informational purposes only.
+由 ``fab`` 设置的当前正在执行的命令的角色列表。仅供显示信息。
 
 .. seealso:: :doc:`execution`
 
@@ -263,8 +242,7 @@ informational purposes only.
 
 **默认值：** ``[]``
 
-Specifies a list of host strings to be :ref:`skipped over <exclude-hosts>`
-during ``fab`` execution. Typically set via :option:`--exclude-hosts/-x <-x>`.
+指定一个主机串列表，以在 ``fab`` 执行过程中 :ref:`skipped over <exclude-hosts>` 。通常通过 :option:`--exclude-hosts/-x <-x>` 来设置。
 
 .. versionadded:: 1.1
 
@@ -274,10 +252,7 @@ during ``fab`` execution. Typically set via :option:`--exclude-hosts/-x <-x>`.
 
 **默认值：** ``fabfile.py``
 
-Filename pattern which ``fab`` searches for when loading fabfiles.
-To indicate a specific file, use the full path to the file. Obviously, it
-doesn't make sense to set this in a fabfile, but it may be specified in a
-``.fabricrc`` file or on the command line.
+当 ``fab`` 加载 fabfile 时查找的文件名。要指定一个特定的 fabfile 文件，需要使用该文件的完整路径。显然，不可能在 fabfile 中设置这个参数，但它可以在一个 .fabricrc 文件设置，或通过命令行参数设置。
 
 .. seealso:: :option:`--fabfile <-f>`, :doc:`fab`
 
@@ -289,10 +264,7 @@ doesn't make sense to set this in a fabfile, but it may be specified in a
 
 **默认值：** ``None``
 
-Enables SSH-driven gatewaying through the indicated host. The value should be a
-normal Fabric host string as used in e.g. :ref:`env.host_string <host_string>`.
-When this is set, newly created connections will be set to route their SSH
-traffic through the remote SSH daemon to the final destination.
+允许通过指定主机创建 SSH 驱动的网关。它的值应该是一个普通的 Fabric 主机串，和在 :ref:`env.host_string <host_string>` 中使用的一样。当它被设置时，新创建的连接将会通过这个远程 SSH 连接到最终的目的地。
 
 .. versionadded:: 1.5
 
@@ -306,10 +278,7 @@ traffic through the remote SSH daemon to the final destination.
 
 **默认值：** ``None``
 
-Defines the current user/host/port which Fabric will connect to when executing
-`~fabric.operations.run`, `~fabric.operations.put` and so forth. This is set by
-``fab`` when iterating over a previously set host list, and may also be
-manually set when using Fabric as a library.
+定义了 Fabric 在执行 `~fabric.operations.run` 、 `~fabric.operations.put` 等命令时使用的用户/主机/端口。它可以由 ``fab`` 在与已设置的主机列表交互时设置，也可以在将 Fabric 作为一个库使用时手工设置。
 
 .. seealso:: :doc:`execution`
 
